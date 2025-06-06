@@ -1,13 +1,19 @@
-const items = [];
+import { getAllItemsFromDB, getItemByIdFromDB, createItemInDB, updateItemInDB } from "../database.js";
 
 // Get all items
 export const getAllItems = async (req, res) => {
-    res.json(items);
+    try {
+        const items = await getAllItemsFromDB();
+        res.json(items);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
 };
 
 // Get item by ID
 export const getItemById = async (req, res) => {
-    const item = items.find(i => i.id === req.params.id);
+    const item = await getItemByIdFromDB(req.params.id);
     if (!item) return res.status(404).json({ message: 'Item not found' });
     res.json(item);
 };
@@ -15,26 +21,42 @@ export const getItemById = async (req, res) => {
 // Create new item
 export const createItem = async (req, res) => {
     const { name, description } = req.body;
-    if (!name) return res.status(400).json({ message: 'Name is required' });
-    const newItem = { id: Date.now().toString(), name, description };
-    items.push(newItem);
-    res.status(201).json(newItem);
+    if (!name || !description) {
+        return res.status(400).json({ message: 'Name and description are required' });
+    }
+    try {
+        const newItem = await createItemInDB(name, description);
+        res.status(201).json(newItem);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
 };
 
 // Update item
 export const updateItem = async (req, res) => {
-    const item = items.find(i => i.id === req.params.id);
-    if (!item) return res.status(404).json({ message: 'Item not found' });
     const { name, description } = req.body;
-    if (name) item.name = name;
-    if (description) item.description = description;
-    res.json(item);
+    if (!name || !description) {
+        return res.status(400).json({ message: 'Name and description are required' });
+    }
+    try {
+        const updatedItem = await updateItemInDB(req.params.id, name, description);
+        if (!updatedItem) return res.status(404).json({ message: 'Item not found' });
+        res.json(updatedItem);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
 };
 
 // Delete item
 export const deleteItem = async (req, res) => {
-    const index = items.findIndex(i => i.id === req.params.id);
-    if (index === -1) return res.status(404).json({ message: 'Item not found' });
-    items.splice(index, 1);
-    res.status(204).send();
+    try {
+        const deleted = await deleteItemInDB(req.params.id);
+        if (!deleted) return res.status(404).json({ message: 'Item not found' });
+        res.status(204).send(); // No content
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
 };
