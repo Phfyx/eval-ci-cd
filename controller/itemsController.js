@@ -1,10 +1,4 @@
-const items: Item[] = [];
-//item interface
-export interface Item {
-    id: string;
-    name: string;
-    description?: string;
-}
+const items = [];
 
 // Get all items
 export const getAllItems = async (req, res) => {
